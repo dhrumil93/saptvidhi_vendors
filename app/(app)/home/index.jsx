@@ -201,6 +201,10 @@ const realWeddings = [
 ];
 
 export default function HomeScreen() {
+  const handleSearch = (text) => {
+    console.log("Searching:", text);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -209,17 +213,22 @@ export default function HomeScreen() {
         barStyle="dark-content"
       />
       <BackgroundShapes />
+
+      {/* Fixed Header */}
+      <View style={styles.headerContainer}>
+        <Header
+          location="Ahmedabad"
+          onLocationPress={() => {}}
+          onMenuPress={() => {}}
+          onSearch={handleSearch}
+        />
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        <Header
-          location="Ahmedabad"
-          onLocationPress={() => {}}
-          onMenuPress={() => {}}
-        />
-
         <View style={styles.content}>
           <View style={styles.carouselContainer}>
             <Image
@@ -387,11 +396,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+  headerContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    paddingTop: StatusBar.currentHeight || 0,
+  },
   scrollView: {
     flex: 1,
+    marginTop: (StatusBar.currentHeight || 0) + 110, // Adjusted for header + search bar height
   },
   scrollContent: {
-    paddingTop: StatusBar.currentHeight || 0,
     paddingBottom: 24,
   },
   content: {
