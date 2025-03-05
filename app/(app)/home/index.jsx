@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,188 +19,31 @@ import WeddingIdeaCard from "../../components/WeddingIdeaCard";
 import SectionHeader from "../../components/SectionHeader";
 import RealWeddingCard from "../../components/RealWeddingCard";
 
-const categories = [
-  {
-    id: "1",
-    title: "Wedding Photos",
-    image:
-      "https://images.unsplash.com/photo-1519741497674-611481863552?w=500&q=80",
-  },
-  {
-    id: "2",
-    title: "Bridal Makeup",
-    image:
-      "https://images.unsplash.com/photo-1457972729786-0411a3b2b626?w=500&q=80",
-  },
-  {
-    id: "3",
-    title: "Wedding Photography",
-    image:
-      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=500&q=80",
-  },
-  {
-    id: "4",
-    title: "Wedding Decorations",
-    image:
-      "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=500&q=80",
-  },
-];
-
-const venues = [
-  {
-    id: "1",
-    name: "VLCC",
-    location: "Ahmedabad",
-    price: "1500",
-    rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1519741497674-611481863552?w=500&q=80",
-  },
-  {
-    id: "2",
-    name: "VLCC",
-    location: "Ahmedabad",
-    price: "1500",
-    rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1519741497674-611481863552?w=500&q=80",
-  },
-];
-
-const makeupArtists = [
-  {
-    id: "1",
-    name: "Pristine Makeovers",
-    location: "Ahmedabad",
-    price: "1500",
-    rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1457972729786-0411a3b2b626?w=500&q=80",
-  },
-  {
-    id: "2",
-    name: "Pristine Makeovers",
-    location: "Ahmedabad",
-    price: "1500",
-    rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1457972729786-0411a3b2b626?w=500&q=80",
-  },
-];
-
-const collections = [
-  {
-    id: "1",
-    title: "Luxury Wedding Venues",
-    subtitle: "15 Vendors",
-    image:
-      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=500&q=80",
-  },
-  {
-    id: "2",
-    title: "Luxury Wedding Venues",
-    subtitle: "15 Vendors",
-    image:
-      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=500&q=80",
-  },
-  {
-    id: "3",
-    title: "Luxury Wedding Venues",
-    subtitle: "15 Vendors",
-    image:
-      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=500&q=80",
-  },
-];
-
-const trendingItems = [
-  {
-    id: "1",
-    image:
-      "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=500&q=80",
-  },
-  {
-    id: "2",
-    image:
-      "https://images.unsplash.com/photo-1611048267451-e6ed903d4a38?w=500&q=80",
-  },
-  {
-    id: "3",
-    image:
-      "https://images.unsplash.com/photo-1458538977777-0549b2370168?w=500&q=80",
-  },
-];
-
-const services = [
-  {
-    id: "1",
-    title: "Wedsta",
-    description: "SaptaVidhi at Home Family Makeup Services",
-    image:
-      "https://images.unsplash.com/photo-1519741497674-611481863552?w=500&q=80",
-  },
-  {
-    id: "2",
-    title: "Cards Services",
-    description: "Plan your dream wedding in digits",
-    image:
-      "https://images.unsplash.com/photo-1511184059754-e4b5c2c0e1a2?w=500&q=80",
-  },
-  {
-    id: "3",
-    title: "Venue Booking Services",
-    description: "Best price guaranteed",
-    image:
-      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=500&q=80",
-  },
-];
-
-const weddingIdeas = [
-  {
-    id: "1",
-    title: "Wedding day bridal portrait",
-    image:
-      "https://images.unsplash.com/photo-1595555785741-7d3efc6957d7?w=500&q=80",
-  },
-  {
-    id: "2",
-    title: "Romantic couple shot",
-    image:
-      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=500&q=80",
-  },
-];
-
-const realWeddings = [
-  {
-    id: "1",
-    coupleName: "Niyati & Kunj",
-    location: "ahmedabad",
-    image:
-      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=500&q=80",
-  },
-  {
-    id: "2",
-    coupleName: "Niyati & Kunj",
-    location: "ahmedabad",
-    image:
-      "https://images.unsplash.com/photo-1494955870715-979ca4f13bf0?w=500&q=80",
-  },
-  {
-    id: "3",
-    coupleName: "Niyati & Kunj",
-    location: "ahmedabad",
-    image:
-      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=500&q=80",
-  },
-  {
-    id: "4",
-    coupleName: "Niyati & Kunj",
-    location: "ahmedabad",
-    image:
-      "https://images.unsplash.com/photo-1494955870715-979ca4f13bf0?w=500&q=80",
-  },
-];
+import {
+  categories,
+  venues,
+  makeupArtists,
+  collections,
+  trendingItems,
+  services,
+  weddingIdeas,
+  realWeddings,
+  carouselImages,
+} from "../../data/homeData";
 
 export default function HomeScreen() {
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentCarouselIndex((prevIndex) =>
+        prevIndex === carouselImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSearch = (text) => {
     console.log("Searching:", text);
   };
@@ -233,14 +76,20 @@ export default function HomeScreen() {
           <View style={styles.carouselContainer}>
             <Image
               source={{
-                uri: "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
+                uri: carouselImages[currentCarouselIndex].image,
               }}
               style={styles.carouselImage}
             />
             <View style={styles.paginationDots}>
-              <View style={[styles.dot, styles.activeDot]} />
-              <View style={styles.dot} />
-              <View style={styles.dot} />
+              {carouselImages.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.dot,
+                    currentCarouselIndex === index && styles.activeDot,
+                  ]}
+                />
+              ))}
             </View>
           </View>
 
