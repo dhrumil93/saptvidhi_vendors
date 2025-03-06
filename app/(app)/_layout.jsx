@@ -8,8 +8,18 @@ export default function AppLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: '#FFFFFF' },
         }}
-      />
+      >
+        <Stack.Screen name="home" />
+        <Stack.Screen 
+          name="vendor-categories" 
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }}
+        />
+      </Stack>
       <BottomTabBar />
     </View>
   );

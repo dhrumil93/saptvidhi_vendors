@@ -18,6 +18,7 @@ import ServiceCard from "../../components/ServiceCard";
 import WeddingIdeaCard from "../../components/WeddingIdeaCard";
 import SectionHeader from "../../components/SectionHeader";
 import RealWeddingCard from "../../components/RealWeddingCard";
+import { useRouter } from 'expo-router';
 
 import {
   categories,
@@ -32,6 +33,7 @@ import {
 } from "../../data/homeData";
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
 
   useEffect(() => {
@@ -46,6 +48,10 @@ export default function HomeScreen() {
 
   const handleSearch = (text) => {
     console.log("Searching:", text);
+  };
+
+  const handleViewAllCategories = () => {
+    router.push('home/vendor-categories');
   };
 
   return (
@@ -94,7 +100,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <SectionHeader title="Categories" onViewAll={() => {}} />
+            <SectionHeader title="Categories" onViewAll={handleViewAllCategories} />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -106,7 +112,7 @@ export default function HomeScreen() {
                   key={category.id}
                   title={category.title}
                   image={category.image}
-                  onPress={() => {}}
+                  onPress={handleViewAllCategories}
                 />
               ))}
             </ScrollView>
