@@ -54,6 +54,10 @@ export default function HomeScreen() {
     router.push('home/vendor-categories');
   };
 
+  const handleViewAllVenues = () => {
+    router.push('/home/venues');
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -121,7 +125,7 @@ export default function HomeScreen() {
           <PlanningTools />
 
           <View style={styles.section}>
-            <SectionHeader title="Venues in your city" onViewAll={() => {}} />
+            <SectionHeader title="Venues in your city" onViewAll={handleViewAllVenues} />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -129,7 +133,11 @@ export default function HomeScreen() {
               contentContainerStyle={styles.horizontalListContent}
             >
               {venues.map((venue) => (
-                <VenueListCard key={venue.id} {...venue} onPress={() => {}} />
+                <VenueListCard 
+                  key={venue.id} 
+                  {...venue} 
+                  onPress={() => handleViewAllVenues()} 
+                />
               ))}
             </ScrollView>
           </View>
