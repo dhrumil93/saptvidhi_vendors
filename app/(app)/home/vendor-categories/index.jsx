@@ -75,7 +75,7 @@ export default function VendorCategories() {
           <View style={styles.placeholder} />
         </View>
         <SearchBar
-          placeholder="Search wedding venues"
+          placeholder="Search Vendors Categories"
           onSearch={handleSearch}
         />
       </View>
