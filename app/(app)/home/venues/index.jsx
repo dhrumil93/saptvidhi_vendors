@@ -13,45 +13,7 @@ import SearchBar from "../../../components/SearchBar";
 import VenueDetailCard from "../../../components/VenueDetailCard";
 import { Ionicons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
-
-const venues = [
-  {
-    id: "1",
-    name: "The Beginning",
-    location: "Vashi, Navi Mumbai",
-    rating: 4.9,
-    vegPrice: "2,000",
-    nonVegPrice: "2,000",
-    capacity: "100-2000 Pax",
-    type: "4 star & above wedding hotels, banquet halls",
-    image:
-      "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&q=80",
-  },
-  {
-    id: "2",
-    name: "Royal Palace",
-    location: "Andheri West, Mumbai",
-    rating: 4.8,
-    vegPrice: "2,500",
-    nonVegPrice: "3,000",
-    capacity: "200-1500 Pax",
-    type: "Luxury wedding venue, garden",
-    image:
-      "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&q=80",
-  },
-  {
-    id: "3",
-    name: "Green Valley Resort",
-    location: "Thane West, Mumbai",
-    rating: 4.7,
-    vegPrice: "1,800",
-    nonVegPrice: "2,200",
-    capacity: "100-800 Pax",
-    type: "Resort, outdoor venue",
-    image:
-      "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80",
-  },
-];
+import { venues } from "../../../../data/venues";
 
 export default function VenuesScreen() {
   const router = useRouter();
@@ -74,6 +36,13 @@ export default function VenuesScreen() {
 
   const handleBookmark = (venueId) => {
     console.log("Bookmark venue:", venueId);
+  };
+
+  const handleVenuePress = (venue) => {
+    router.push({
+      pathname: "/(app)/home/venues/venue-details",
+      params: { id: venue.id },
+    });
   };
 
   return (
@@ -107,8 +76,9 @@ export default function VenuesScreen() {
       >
         {venues.map((venue) => (
           <VenueDetailCard
-            key={venue.id}
             {...venue}
+            key={venue.id}
+            onPress={() => handleVenuePress(venue)}
             onMessage={() => handleMessage(venue.id)}
             onContact={() => handleContact(venue.id)}
             onBookmark={() => handleBookmark(venue.id)}
