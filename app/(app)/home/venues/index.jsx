@@ -13,7 +13,7 @@ import SearchBar from "../../../components/SearchBar";
 import VenueDetailCard from "../../../components/VenueDetailCard";
 import { Ionicons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
-import { venues } from "../../../../data/venues";
+import { venues } from "../../../data/venues";
 
 export default function VenuesScreen() {
   const router = useRouter();
