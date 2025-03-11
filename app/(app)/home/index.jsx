@@ -18,7 +18,7 @@ import ServiceCard from "../../components/ServiceCard";
 import WeddingIdeaCard from "../../components/WeddingIdeaCard";
 import SectionHeader from "../../components/SectionHeader";
 import RealWeddingCard from "../../components/RealWeddingCard";
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
 
 import {
   categories,
@@ -51,14 +51,14 @@ export default function HomeScreen() {
   };
 
   const handleViewAllCategories = () => {
-    router.push('home/vendor-categories');
+    router.push("home/vendor-categories");
   };
 
   const handleViewAllVenues = () => {
-    router.push('/home/venues');
+    router.push("/home/venues");
   };
-  const handleViewTrendings = () => {
-    router.push('/home/trendings');
+  const handleViewAllTrendings = () => {
+    router.push("/home/trending");
   };
 
   return (
@@ -107,7 +107,10 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <SectionHeader title="Categories" onViewAll={handleViewAllCategories} />
+            <SectionHeader
+              title="Categories"
+              onViewAll={handleViewAllCategories}
+            />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -128,7 +131,10 @@ export default function HomeScreen() {
           <PlanningTools />
 
           <View style={styles.section}>
-            <SectionHeader title="Venues in your city" onViewAll={handleViewAllVenues} />
+            <SectionHeader
+              title="Venues in your city"
+              onViewAll={handleViewAllVenues}
+            />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -136,10 +142,10 @@ export default function HomeScreen() {
               contentContainerStyle={styles.horizontalListContent}
             >
               {venues.map((venue) => (
-                <VenueListCard 
-                  key={venue.id} 
-                  {...venue} 
-                  onPress={() => handleViewAllVenues()} 
+                <VenueListCard
+                  key={venue.id}
+                  {...venue}
+                  onPress={() => handleViewAllVenues()}
                 />
               ))}
             </ScrollView>
@@ -185,7 +191,10 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <SectionHeader title="Trending Today" onViewAll={() => {}} />
+            <SectionHeader
+              title="Trending Today"
+              onViewAll={handleViewAllTrendings}
+            />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -197,7 +206,7 @@ export default function HomeScreen() {
                   key={item.id}
                   source={{ uri: item.image }}
                   style={styles.trendingImage}
-                  onPress={handleViewTrendings}
+                  // onPress={handleViewTrendings}
                 />
               ))}
             </ScrollView>

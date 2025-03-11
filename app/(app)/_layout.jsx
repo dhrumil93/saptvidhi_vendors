@@ -26,6 +26,13 @@ export default function AppLayout() {
             animation: 'slide_from_right',
           }}
         />
+        <Stack.Screen 
+          name="trending" 
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }}
+        />
       </Stack>
       <BottomTabBar />
     </View>
