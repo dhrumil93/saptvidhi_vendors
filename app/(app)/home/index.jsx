@@ -60,6 +60,9 @@ export default function HomeScreen() {
   const handleViewAllTrendings = () => {
     router.push("/home/trending");
   };
+  const handleViewAllServices = () => {
+    router.push("/home/services");
+  };
 
   return (
     <View style={styles.container}>
@@ -206,17 +209,24 @@ export default function HomeScreen() {
                   key={item.id}
                   source={{ uri: item.image }}
                   style={styles.trendingImage}
-                  // onPress={handleViewTrendings}
+                  onPress={() => handleViewAllTrendings()}
                 />
               ))}
             </ScrollView>
           </View>
 
           <View style={[styles.section, styles.lastSection]}>
-            <SectionHeader title="SaptaVidhi Services" onViewAll={() => {}} />
+            <SectionHeader
+              title="SaptaVidhi Services"
+              onViewAll={handleViewAllServices}
+            />
             <View style={styles.servicesGrid}>
               {services.map((service) => (
-                <ServiceCard key={service.id} {...service} onPress={() => {}} />
+                <ServiceCard
+                  key={service.id}
+                  {...service}
+                  onPress={() => handleViewAllServices()}
+                />
               ))}
             </View>
             <View style={styles.section}>

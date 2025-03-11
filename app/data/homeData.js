@@ -114,6 +114,12 @@ export const services = [
     description: "Best price guaranteed",
     image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=500&q=80",
   },
+  {
+    id: "4",
+    title: "Venue Booking Services",
+    description: "Best price guaranteed",
+    image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=500&q=80",
+  },
 ];
 
 export const weddingIdeas = [
