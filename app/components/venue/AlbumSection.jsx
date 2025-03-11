@@ -1,5 +1,13 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  Dimensions,
+} from "react-native";
 
 const { width } = Dimensions.get("window");
 
@@ -23,6 +31,9 @@ const AlbumsSection = ({ venue }) => {
           scrollEnabled={false}
         />
       </View>
+      <TouchableOpacity style={styles.viewAllReviewsButton}>
+        <Text style={styles.viewAllReviewsText}>View All</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -58,6 +69,21 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     resizeMode: "cover",
+  },
+  viewAllReviewsButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    marginTop: 8,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#DDD",
+  },
+  viewAllReviewsText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1a1a1a",
   },
 });
 

@@ -77,7 +77,7 @@ export default function TrendingDetailScreen() {
         <HeaderSection trending={trending} />
         <PhotoTagsection trending={trending} />
         <AlbumsSection trending={trending} />
-
+        <Text style={styles.sectionTitle}>Related Features</Text>
         {/* Similar Vendors Section */}
         <View style={styles.similiarContainer}>
           {trendings.map((trending) => (
@@ -146,6 +146,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    padding: 16,
+    paddingBottom: 8,
   },
   similiarContainer: {
     marginRight: 16,

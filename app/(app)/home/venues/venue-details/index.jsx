@@ -1,5 +1,14 @@
 import React from "react";
-import { View, ScrollView, Image, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions } from "react-native";
+import {
+  View,
+  ScrollView,
+  Image,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  Dimensions,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AntDesign, Ionicons, FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -81,7 +90,7 @@ export default function VenueDetailScreen() {
         <AreasSection venue={venue} />
         <ReviewsSection />
         <FaqSection faqs={venueFAQs} />
-
+        <Text style={styles.sectionTitle}>Similiar Venues</Text>
         {/* Similar Vendors Section */}
         <View style={styles.similiarContainer}>
           {venues.map((venue) => (
@@ -107,6 +116,13 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    padding: 16,
+    paddingBottom: 8,
   },
   imageContainer: {
     width: "100%",
@@ -154,5 +170,5 @@ const styles = StyleSheet.create({
   similiarContainer: {
     marginRight: 16,
     marginLeft: 16,
-  }
+  },
 });
