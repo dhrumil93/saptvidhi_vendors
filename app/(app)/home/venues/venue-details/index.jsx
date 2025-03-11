@@ -6,13 +6,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import VenueDetailCard from "../../../../components/VenueDetailCard";
 import { venues } from "../../../../data/venues";
 import venueFAQs from "../../../../data/venueFAQs";
-import HeaderSection from "../../../../components/headerSection";
-import AboutSection from "../../../../components/AboutSection";
-import PricingSection from "../../../../components/PricingSection.jsx";
-import AlbumsSection from "../../../../components/AlbumSection";
-import AreasSection from "../../../../components/AreaSection";
-import ReviewsSection from "../../../../components/ReviewSection";
-import FaqSection from "../../../../components/FaqSection";
+import HeaderSection from "../../../../components/venue/headerSection.jsx";
+import AboutSection from "../../../../components/venue/AboutSection.jsx";
+import PricingSection from "../../../../components/venue/PricingSection.jsx";
+import AlbumsSection from "../../../../components/venue/AlbumSection.jsx";
+import AreasSection from "../../../../components/venue/AreaSection.jsx";
+import ReviewsSection from "../../../../components/venue/ReviewSection.jsx";
+import FaqSection from "../../../../components/venue/FaqSection.jsx";
 
 const { width } = Dimensions.get("window");
 
