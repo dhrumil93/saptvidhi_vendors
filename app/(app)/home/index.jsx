@@ -57,6 +57,9 @@ export default function HomeScreen() {
   const handleViewAllVenues = () => {
     router.push('/home/venues');
   };
+  const handleViewTrendings = () => {
+    router.push('/home/trendings');
+  };
 
   return (
     <View style={styles.container}>
@@ -194,6 +197,7 @@ export default function HomeScreen() {
                   key={item.id}
                   source={{ uri: item.image }}
                   style={styles.trendingImage}
+                  onPress={handleViewTrendings}
                 />
               ))}
             </ScrollView>
