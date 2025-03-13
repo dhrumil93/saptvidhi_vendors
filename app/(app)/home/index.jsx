@@ -64,6 +64,14 @@ export default function HomeScreen() {
     router.push("/home/services");
   };
 
+  const handleViewAllMakeup = () => {
+    router.push("/home/bridal");
+  };
+
+  const handleViewRealWedding = (id) => {
+    router.push(`/home/real-weddings/${id}`);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -155,7 +163,10 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <SectionHeader title="Bridal Makeup for You" onViewAll={() => {}} />
+            <SectionHeader
+              title="Bridal Makeup for You"
+              onViewAll={handleViewAllMakeup}
+            />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -166,7 +177,7 @@ export default function HomeScreen() {
                 <MakeupArtistCard
                   key={artist.id}
                   {...artist}
-                  onPress={() => {}}
+                  onPress={handleViewAllMakeup}
                 />
               ))}
             </ScrollView>
@@ -253,7 +264,10 @@ export default function HomeScreen() {
             </View>
 
             <View style={[styles.section, styles.lastSection]}>
-              <SectionHeader title="Real Weddings We Love" />
+              <SectionHeader 
+                title="Real Weddings We Love" 
+                onViewAll={() => router.push('/real-weddings')}
+              />
 
               <ScrollView
                 horizontal
@@ -265,7 +279,7 @@ export default function HomeScreen() {
                   <RealWeddingCard
                     key={wedding.id}
                     {...wedding}
-                    onPress={() => {}}
+                    onPress={() => handleViewRealWedding(wedding.id)}
                   />
                 ))}
               </ScrollView>
