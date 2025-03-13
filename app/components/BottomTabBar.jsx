@@ -25,6 +25,7 @@ const BottomTabBar = () => {
 
   const tabs = [
     { label: 'Home', icon: 'home', path: '/home' },
+    { label: 'Ideas', icon: 'bulb-outline', path: '/ideas' },
     { label: 'Matches', icon: 'heart', path: '/matches' },
     { label: 'Received', icon: 'heart-outline', path: '/received' },
     { label: 'Accepted', icon: 'phone-portrait-outline', path: '/accepted' },
