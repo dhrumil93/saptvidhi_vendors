@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
-import VendorCategoryCard from '../../../components/VendorCategoryCard';
-import BackgroundShapes from '../../../components/BackgroundShapes';
-import SearchBar from '../../../components/SearchBar';
+import VendorCategoryCard from '../../components/VendorCategoryCard';
+import BackgroundShapes from '../../components/BackgroundShapes';
+import SearchBar from '../../components/SearchBar';
 import { AntDesign } from '@expo/vector-icons';
 import { TouchableOpacity, Text } from 'react-native';
 

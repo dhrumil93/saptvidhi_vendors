@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import BackgroundShapes from '../../components/BackgroundShapes';
 
-export default function SkyScreen() {
+export default function MoreScreen() {
   return (
     <View style={styles.container}>
       <BackgroundShapes />
-      <Text style={styles.text}>Sky Screen</Text>
+      <Text style={styles.text}>Settings Screen</Text>
     </View>
   );
 }
