@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   Platform,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,16 +24,47 @@ import SlotSelector from "../../components/cart/SlotSelector";
 import PaymentOption from "../../components/cart/PaymentOption";
 import PrimaryButton from "../../components/cart/PrimaryButton";
 
-// Import Razorpay with better error handling
+// Add these imports at the top
+import { PAYMENT_CONFIG } from "../../../config/payment";
+import { initStripe } from "@stripe/stripe-react-native";
+import PayPal from "react-native-paypal-wrapper";
+// import PhonePe from 'phonepe-payment-sdk';
+
+// Import payment gateways with better error handling
 let RazorpayCheckout = null;
-if (Platform.OS !== 'web') {
+let StripeModule = null;
+let PayPalModule = null;
+let PhonePeModule = null;
+
+if (Platform.OS !== "web") {
   // Only import on native platforms
   try {
-    const RazorpayModule = require('react-native-razorpay');
+    const RazorpayModule = require("react-native-razorpay");
     RazorpayCheckout = RazorpayModule.default || RazorpayModule;
     console.log("Razorpay loaded successfully:", typeof RazorpayCheckout);
   } catch (e) {
     console.error("Failed to load Razorpay:", e);
+  }
+
+  try {
+    StripeModule = require("@stripe/stripe-react-native");
+    console.log("Stripe loaded successfully");
+  } catch (e) {
+    console.error("Failed to load Stripe:", e);
+  }
+
+  try {
+    PayPalModule = require("react-native-paypal");
+    console.log("PayPal loaded successfully");
+  } catch (e) {
+    console.error("Failed to load PayPal:", e);
+  }
+
+  try {
+    PhonePeModule = require("react-native-phonepe-pg");
+    console.log("PhonePe loaded successfully");
+  } catch (e) {
+    console.error("Failed to load PhonePe:", e);
   }
 }
 
@@ -48,33 +80,82 @@ const CartScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [totalAmount, setTotalAmount] = useState(0);
   const [discount, setDiscount] = useState(0);
-  const [isRazorpayAvailable, setIsRazorpayAvailable] = useState(false);
-  const [paymentMode, setPaymentMode] = useState("unknown"); // "razorpay", "simulation", or "unknown"
 
-  // Check if Razorpay is available on component mount
+  // Payment gateway availability states
+  const [razorpayAvailable, setRazorpayAvailable] = useState(false);
+  const [stripeAvailable, setStripeAvailable] = useState(false);
+  const [paypalAvailable, setPaypalAvailable] = useState(false);
+  const [phonePeAvailable, setPhonePeAvailable] = useState(false);
+
+  // Selected payment gateway
+  const [selectedGateway, setSelectedGateway] = useState(null);
+
+  // Payment mode (actual or simulation)
+  const [paymentMode, setPaymentMode] = useState("unknown"); // "actual", "simulation", or "unknown"
+
+  // Check payment gateways availability on component mount
   useEffect(() => {
-    const checkRazorpay = () => {
-      const available = RazorpayCheckout !== null && 
-                       typeof RazorpayCheckout === 'object' && 
-                       typeof RazorpayCheckout.open === 'function';
-      
-      setIsRazorpayAvailable(available);
-      console.log("Razorpay availability:", available);
-      
-      // Set payment mode based on availability
-      setPaymentMode(available ? "razorpay" : "simulation");
+    const checkPaymentGateways = () => {
+      // Check Razorpay
+      const isRazorpayAvailable =
+        RazorpayCheckout !== null &&
+        typeof RazorpayCheckout === "object" &&
+        typeof RazorpayCheckout.open === "function";
+      setRazorpayAvailable(isRazorpayAvailable);
+
+      // Check Stripe
+      const isStripeAvailable = StripeModule !== null;
+      setStripeAvailable(isStripeAvailable);
+
+      // Check PayPal
+      const isPaypalAvailable = PayPalModule !== null;
+      setPaypalAvailable(isPaypalAvailable);
+
+      // Check PhonePe
+      const isPhonePeAvailable = PhonePeModule !== null;
+      setPhonePeAvailable(isPhonePeAvailable);
+
+      console.log("Payment gateways availability:", {
+        razorpay: isRazorpayAvailable,
+        stripe: isStripeAvailable,
+        paypal: isPaypalAvailable,
+        phonePe: isPhonePeAvailable,
+      });
+
+      // Set default payment gateway (prefer Razorpay if available)
+      if (isRazorpayAvailable) {
+        setSelectedGateway("razorpay");
+      } else if (isPhonePeAvailable) {
+        setSelectedGateway("phonepe");
+      } else if (isStripeAvailable) {
+        setSelectedGateway("stripe");
+      } else if (isPaypalAvailable) {
+        setSelectedGateway("paypal");
+      }
+
+      // Set payment mode based on any gateway availability
+      const anyGatewayAvailable =
+        isRazorpayAvailable ||
+        isStripeAvailable ||
+        isPaypalAvailable ||
+        isPhonePeAvailable;
+      setPaymentMode(anyGatewayAvailable ? "actual" : "simulation");
     };
-    
-    checkRazorpay();
+
+    checkPaymentGateways();
   }, []);
 
   // Calculate total amount and discount whenever items or payment method changes
   useEffect(() => {
-    const calculatedTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const calculatedTotal = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
     setTotalAmount(calculatedTotal);
-    
+
     // Calculate discount (10% for full payment)
-    const discountAmount = selectedPayment === "full" ? calculatedTotal * 0.1 : 0;
+    const discountAmount =
+      selectedPayment === "full" ? calculatedTotal * 0.1 : 0;
     setDiscount(discountAmount);
   }, [items, selectedPayment]);
 
@@ -107,102 +188,237 @@ const CartScreen = () => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  const handleProceedToPay = async () => {
-    // Double-check Razorpay availability
-    if (!isRazorpayAvailable) {
-      console.log("Razorpay not available, falling back to development payment");
-      handleDevelopmentPayment();
-      return;
+  const handleGatewaySelection = (gateway) => {
+    setSelectedGateway(gateway);
+  };
+
+  const validatePaymentDetails = () => {
+    // if (!selectedSlot) {
+    //   Alert.alert("Error", "Please select a time slot");
+    //   return false;
+    // }
+
+    if (!selectedGateway) {
+      Alert.alert("Error", "Please select a payment method");
+      return false;
     }
 
+    return true;
+  };
+
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleProceedToPay = async () => {
+    if (!validatePaymentDetails() || isProcessing) return;
+
+    const finalAmount = selectedPayment === "split" 
+      ? (totalAmount - discount) / 2 
+      : (totalAmount - discount);
+    
+    setIsProcessing(true);
+    
     try {
-      setPaymentMode("razorpay");
-      const paymentAmount = selectedPayment === "split" 
-        ? Math.round((totalAmount - discount) / 2 * 100) 
-        : Math.round((totalAmount - discount) * 100);
-
-      const options = {
-        key: "rzp_test_vv1FCZvuDRF6lQ",
-        amount: paymentAmount, // Razorpay expects amount in paise
-        currency: 'INR',
-        name: 'Saptvidhi Vendors',
-        description: 'Wedding Services Payment',
-        prefill: {
-          email: 'user@example.com',
-          contact: '9999999999',
-          name: 'User Name'
-        },
-        theme: { color: '#FF69B4' }
-      };
-
-      console.log("Payment options:", options);
-
-      // Safely call Razorpay
-      try {
-        const data = await RazorpayCheckout.open(options);
-        console.log("Payment success via Razorpay:", data);
-        Alert.alert(
-          "Razorpay Payment Successful", 
-          `Payment processed through Razorpay.\nPayment ID: ${data.razorpay_payment_id}`,
-          [
-            { 
-              text: "OK", 
-              onPress: () => router.push({
-                pathname: '/cart/payment-success',
-                params: { paymentMode: 'razorpay', paymentId: data.razorpay_payment_id }
-              })
-            }
-          ]
-        );
-      } catch (error) {
-        console.log("Payment error:", error);
-        // Fix for undefined error messages
-        const errorMessage = error && (error.message || error.description) 
-          ? `${error.message || error.description}`
-          : "Payment failed. Please try again.";
-        
-        Alert.alert("Razorpay Payment Failed", errorMessage);
+      let result;
+      switch (selectedGateway) {
+        case "razorpay":
+          result = await processRazorpayPayment(finalAmount);
+          break;
+        case "stripe":
+          result = await processStripePayment(finalAmount);
+          break;
+        case "paypal":
+          result = await processPayPalPayment(finalAmount);
+          break;
+        case "phonepe":
+          result = await processPhonePePayment(finalAmount);
+          break;
+        default:
+          throw new Error("Invalid payment method");
       }
-    } catch (error) {
-      console.log("Setup error:", error);
-      // Handle any unexpected errors with the Razorpay setup
-      const errorMessage = error && error.message 
-        ? error.message 
-        : "Something went wrong with the payment setup";
       
-      Alert.alert("Error", errorMessage);
-      handleDevelopmentPayment();
+      handlePaymentSuccess(selectedGateway, result.paymentId);
+    } catch (error) {
+      console.error("Payment error:", error);
+      Alert.alert(
+        "Payment Failed",
+        error.message || "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  // Fallback for development or when Razorpay is not available
-  const handleDevelopmentPayment = () => {
+  const processRazorpayPayment = async (amount) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const success = Math.random() > 0.1; // 90% success rate
+        if (success) {
+          resolve({
+            paymentId: `rzp_test_${Date.now()}`,
+            amount: amount,
+          });
+        } else {
+          reject(new Error("Payment simulation failed"));
+        }
+      }, PAYMENT_CONFIG.SIMULATION_DELAY);
+    });
+  };
+
+  const processStripePayment = async (amount) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const success = Math.random() > 0.1;
+        if (success) {
+          resolve({
+            paymentId: `stripe_test_${Date.now()}`,
+            amount: amount,
+          });
+        } else {
+          reject(new Error("Payment simulation failed"));
+        }
+      }, PAYMENT_CONFIG.SIMULATION_DELAY);
+    });
+  };
+
+  const processPayPalPayment = async (amount) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const success = Math.random() > 0.1;
+        if (success) {
+          resolve({
+            paymentId: `pp_test_${Date.now()}`,
+            amount: amount,
+          });
+        } else {
+          reject(new Error("Payment simulation failed"));
+        }
+      }, PAYMENT_CONFIG.SIMULATION_DELAY);
+    });
+  };
+
+  const processPhonePePayment = async (amount) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const success = Math.random() > 0.1;
+        if (success) {
+          resolve({
+            paymentId: `phonepe_test_${Date.now()}`,
+            amount: amount,
+          });
+        } else {
+          reject(new Error("Payment simulation failed"));
+        }
+      }, PAYMENT_CONFIG.SIMULATION_DELAY);
+    });
+  };
+
+  // Fallback simulation for payment
+  const handleSimulatedPayment = (gateway = selectedGateway || "general") => {
     setPaymentMode("simulation");
+
+    const gatewayName =
+      gateway === "razorpay"
+        ? "Razorpay"
+        : gateway === "stripe"
+        ? "Stripe"
+        : gateway === "paypal"
+        ? "PayPal"
+        : gateway === "phonepe"
+        ? "PhonePe"
+        : "Payment";
+
     Alert.alert(
-      "SIMULATION MODE",
-      "⚠️ Razorpay is not available. This is a payment simulation for development purposes only.",
+      `SIMULATION MODE - ${gatewayName}`,
+      `⚠️ ${gatewayName} integration is not available. This is a payment simulation for development purposes only.`,
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Simulate Payment", 
+        {
+          text: "Simulate Payment",
           onPress: () => {
             Alert.alert(
               "Simulated Payment Successful",
-              "⚠️ This was a SIMULATED payment. No actual transaction occurred.",
+              `⚠️ This was a SIMULATED ${gatewayName} payment. No actual transaction occurred.`,
               [
-                { 
-                  text: "OK", 
-                  onPress: () => router.push({
-                    pathname: '/cart/payment-success',
-                    params: { paymentMode: 'simulation', paymentId: 'sim-' + Date.now() }
-                  })
-                }
+                {
+                  text: "OK",
+                  onPress: () =>
+                    router.push({
+                      pathname: "/cart/payment-success",
+                      params: {
+                        paymentMode: "simulation",
+                        paymentGateway: gateway,
+                        paymentId: `sim-${gateway}-${Date.now()}`,
+                      },
+                    }),
+                },
               ]
             );
-          }
-        }
+          },
+        },
       ]
     );
+  };
+
+  // Add a new function to handle successful payments
+  const handlePaymentSuccess = (gateway, paymentId) => {
+    Alert.alert(
+      "Payment Successful",
+      `Payment completed via ${gateway.toUpperCase()}.\nPayment ID: ${paymentId}`,
+      [
+        {
+          text: "OK",
+          onPress: () =>
+            router.push({
+              pathname: "/cart/payment-success",
+              params: {
+                paymentMode: gateway,
+                paymentId: paymentId,
+              },
+            }),
+        },
+      ]
+    );
+  };
+
+  // Get button text based on selected gateway and payment option
+  const getPayButtonText = () => {
+    const amountText = `₹${formatPrice(
+      selectedPayment === "split"
+        ? (totalAmount - discount) / 2
+        : totalAmount - discount
+    )}`;
+
+    const prefixText = paymentMode === "simulation" ? "SIMULATE" : "Pay with";
+    const gatewayText =
+      selectedGateway === "razorpay"
+        ? "Razorpay"
+        : selectedGateway === "stripe"
+        ? "Stripe"
+        : selectedGateway === "paypal"
+        ? "PayPal"
+        : selectedGateway === "phonepe"
+        ? "PhonePe"
+        : "Selected Method";
+
+    return `${prefixText} ${gatewayText} (${amountText})`;
+  };
+
+  // Get button style based on selected gateway
+  const getPayButtonStyle = () => {
+    if (paymentMode === "simulation") return styles.simulateButton;
+
+    switch (selectedGateway) {
+      case "razorpay":
+        return styles.razorpayButton;
+      case "stripe":
+        return styles.stripeButton;
+      case "paypal":
+        return styles.paypalButton;
+      case "phonepe":
+        return styles.phonePeButton;
+      default:
+        return styles.defaultPayButton;
+    }
   };
 
   return (
@@ -220,7 +436,7 @@ const CartScreen = () => {
       {paymentMode === "simulation" && (
         <View style={styles.paymentModeIndicator}>
           <Text style={styles.paymentModeText}>
-            ⚠️ SIMULATION MODE - Razorpay Not Available
+            ⚠️ SIMULATION MODE - Payment Gateways Not Available
           </Text>
         </View>
       )}
@@ -249,7 +465,10 @@ const CartScreen = () => {
 
         {/* Time Slot */}
         <Section title="Select Slot">
-          <SlotSelector onPress={handleSelectSlot} selectedSlot={selectedSlot} />
+          <SlotSelector
+            onPress={handleSelectSlot}
+            selectedSlot={selectedSlot}
+          />
         </Section>
 
         {/* Requirements */}
@@ -269,15 +488,17 @@ const CartScreen = () => {
             <Text style={styles.summaryLabel}>Subtotal</Text>
             <Text style={styles.summaryValue}>₹{formatPrice(totalAmount)}</Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Discount</Text>
             <Text style={styles.summaryValue}>-₹{formatPrice(discount)}</Text>
           </View>
-          
+
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>₹{formatPrice(totalAmount - discount)}</Text>
+            <Text style={styles.totalValue}>
+              ₹{formatPrice(totalAmount - discount)}
+            </Text>
           </View>
 
           <PaymentOption
@@ -292,33 +513,105 @@ const CartScreen = () => {
             onSelect={() => setSelectedPayment("split")}
           />
         </Section>
-        
-        {/* Payment Method Indicator */}
-        <Section title="Payment Method">
-          <View style={styles.paymentMethodRow}>
-            <Text style={styles.paymentMethodLabel}>
-              {isRazorpayAvailable 
-                ? "Razorpay Payments (Live)" 
-                : "Simulation Mode (Development Only)"}
-            </Text>
-            <Ionicons 
-              name={isRazorpayAvailable ? "checkmark-circle" : "alert-circle"} 
-              size={24} 
-              color={isRazorpayAvailable ? "#4CAF50" : "#FF9800"} 
-            />
+
+        {/* Payment Method Selection */}
+        <Section title="Select Payment Method">
+          <View style={styles.paymentMethodsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.paymentMethodOption,
+                selectedGateway === "razorpay" && styles.selectedPaymentMethod,
+              ]}
+              onPress={() => handleGatewaySelection("razorpay")}
+            >
+              <View style={styles.paymentLogoContainer}>
+                <Text style={styles.paymentLogo}>Razorpay</Text>
+              </View>
+              <Text style={styles.paymentMethodName}>Razorpay</Text>
+              <View style={styles.paymentStatusContainer}>
+                <Ionicons
+                  name={razorpayAvailable ? "checkmark-circle" : "alert-circle"}
+                  size={16}
+                  color={razorpayAvailable ? "#4CAF50" : "#FF9800"}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.paymentMethodOption,
+                selectedGateway === "phonepe" && styles.selectedPaymentMethod,
+              ]}
+              onPress={() => handleGatewaySelection("phonepe")}
+            >
+              <View style={styles.paymentLogoContainer}>
+                <Text style={styles.paymentLogo}>PhonePe</Text>
+              </View>
+              <Text style={styles.paymentMethodName}>PhonePe</Text>
+              <View style={styles.paymentStatusContainer}>
+                <Ionicons
+                  name={phonePeAvailable ? "checkmark-circle" : "alert-circle"}
+                  size={16}
+                  color={phonePeAvailable ? "#4CAF50" : "#FF9800"}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.paymentMethodOption,
+                selectedGateway === "stripe" && styles.selectedPaymentMethod,
+              ]}
+              onPress={() => handleGatewaySelection("stripe")}
+            >
+              <View style={styles.paymentLogoContainer}>
+                <Text style={styles.paymentLogo}>Stripe</Text>
+              </View>
+              <Text style={styles.paymentMethodName}>Stripe</Text>
+              <View style={styles.paymentStatusContainer}>
+                <Ionicons
+                  name={stripeAvailable ? "checkmark-circle" : "alert-circle"}
+                  size={16}
+                  color={stripeAvailable ? "#4CAF50" : "#FF9800"}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.paymentMethodOption,
+                selectedGateway === "paypal" && styles.selectedPaymentMethod,
+              ]}
+              onPress={() => handleGatewaySelection("paypal")}
+            >
+              <View style={styles.paymentLogoContainer}>
+                <Text style={styles.paymentLogo}>PayPal</Text>
+              </View>
+              <Text style={styles.paymentMethodName}>PayPal</Text>
+              <View style={styles.paymentStatusContainer}>
+                <Ionicons
+                  name={paypalAvailable ? "checkmark-circle" : "alert-circle"}
+                  size={16}
+                  color={paypalAvailable ? "#4CAF50" : "#FF9800"}
+                />
+              </View>
+            </TouchableOpacity>
           </View>
+
+          {paymentMode === "simulation" && (
+            <Text style={styles.paymentDisclaimerText}>
+              Note: All payments will be simulated for development purposes
+            </Text>
+          )}
         </Section>
       </ScrollView>
 
       <PrimaryButton 
-        title={`${isRazorpayAvailable ? "Pay" : "SIMULATE"} (₹${formatPrice(
-          selectedPayment === "split" 
-            ? (totalAmount - discount) / 2 
-            : (totalAmount - discount)
-        )})`} 
-        onPress={isRazorpayAvailable ? handleProceedToPay : handleDevelopmentPayment}
-        style={isRazorpayAvailable ? styles.payButton : styles.simulateButton}
-      />
+  title={isProcessing ? "Processing..." : getPayButtonText()} 
+  onPress={handleProceedToPay}
+  style={getPayButtonStyle()}
+  disabled={isProcessing}
+/>
     </SafeAreaView>
   );
 };
@@ -390,21 +683,69 @@ const styles = StyleSheet.create({
     color: "#856404",
     fontWeight: "bold",
   },
-  paymentMethodRow: {
+  paymentMethodsContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  paymentMethodOption: {
+    width: "48%",
     backgroundColor: "#F9F9F9",
     borderRadius: 8,
-    paddingHorizontal: 16,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#EEE",
+    alignItems: "center",
   },
-  paymentMethodLabel: {
-    fontSize: 16,
+  selectedPaymentMethod: {
+    borderColor: "#FF69B4",
+    borderWidth: 2,
+    backgroundColor: "#FFF0F7",
+  },
+  paymentLogoContainer: {
+    width: 60,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  paymentLogo: {
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  paymentMethodName: {
+    fontSize: 14,
     fontWeight: "500",
+    marginBottom: 4,
   },
-  payButton: {
+  paymentStatusContainer: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+  },
+  paymentDisclaimerText: {
+    fontSize: 12,
+    color: "#FF9800",
+    fontStyle: "italic",
+    textAlign: "center",
+    marginTop: 8,
+  },
+  defaultPayButton: {
     backgroundColor: "#FF69B4",
+  },
+  razorpayButton: {
+    backgroundColor: "#2B83EA",
+  },
+  stripeButton: {
+    backgroundColor: "#6772E5",
+  },
+  paypalButton: {
+    backgroundColor: "#0079C1",
+  },
+  phonePeButton: {
+    backgroundColor: "#5F259F",
   },
   simulateButton: {
     backgroundColor: "#FF9800",
