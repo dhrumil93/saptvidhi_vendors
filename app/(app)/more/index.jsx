@@ -198,7 +198,7 @@ export default function SettingsScreen() {
       <LogoutDialog
         visible={showLogoutDialog}
         onClose={() => setShowLogoutDialog(false)}
-        onLogout={() => router.replace("/(app)/home")}
+        onLogout={() => router.replace("/(auth)/login")}
       />
     </SafeAreaView>
   );
