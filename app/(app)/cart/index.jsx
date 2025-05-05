@@ -24,50 +24,6 @@ import SlotSelector from "../../components/cart/SlotSelector";
 import PaymentOption from "../../components/cart/PaymentOption";
 import PrimaryButton from "../../components/cart/PrimaryButton";
 
-// Add these imports at the top
-import { PAYMENT_CONFIG } from "../../../config/payment";
-import { initStripe } from "@stripe/stripe-react-native";
-import PayPal from "react-native-paypal-wrapper";
-// import PhonePe from 'phonepe-payment-sdk';
-
-// Import payment gateways with better error handling
-let RazorpayCheckout = null;
-let StripeModule = null;
-let PayPalModule = null;
-let PhonePeModule = null;
-
-if (Platform.OS !== "web") {
-  // Only import on native platforms
-  try {
-    const RazorpayModule = require("react-native-razorpay");
-    RazorpayCheckout = RazorpayModule.default || RazorpayModule;
-    console.log("Razorpay loaded successfully:", typeof RazorpayCheckout);
-  } catch (e) {
-    console.error("Failed to load Razorpay:", e);
-  }
-
-  try {
-    StripeModule = require("@stripe/stripe-react-native");
-    console.log("Stripe loaded successfully");
-  } catch (e) {
-    console.error("Failed to load Stripe:", e);
-  }
-
-  try {
-    PayPalModule = require("react-native-paypal");
-    console.log("PayPal loaded successfully");
-  } catch (e) {
-    console.error("Failed to load PayPal:", e);
-  }
-
-  try {
-    PhonePeModule = require("react-native-phonepe-pg");
-    console.log("PhonePe loaded successfully");
-  } catch (e) {
-    console.error("Failed to load PhonePe:", e);
-  }
-}
-
 const CartScreen = () => {
   const router = useRouter();
   const [items, setItems] = useState([
@@ -80,70 +36,6 @@ const CartScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [totalAmount, setTotalAmount] = useState(0);
   const [discount, setDiscount] = useState(0);
-
-  // Payment gateway availability states
-  const [razorpayAvailable, setRazorpayAvailable] = useState(false);
-  const [stripeAvailable, setStripeAvailable] = useState(false);
-  const [paypalAvailable, setPaypalAvailable] = useState(false);
-  const [phonePeAvailable, setPhonePeAvailable] = useState(false);
-
-  // Selected payment gateway
-  const [selectedGateway, setSelectedGateway] = useState(null);
-
-  // Payment mode (actual or simulation)
-  const [paymentMode, setPaymentMode] = useState("unknown"); // "actual", "simulation", or "unknown"
-
-  // Check payment gateways availability on component mount
-  useEffect(() => {
-    const checkPaymentGateways = () => {
-      // Check Razorpay
-      const isRazorpayAvailable =
-        RazorpayCheckout !== null &&
-        typeof RazorpayCheckout === "object" &&
-        typeof RazorpayCheckout.open === "function";
-      setRazorpayAvailable(isRazorpayAvailable);
-
-      // Check Stripe
-      const isStripeAvailable = StripeModule !== null;
-      setStripeAvailable(isStripeAvailable);
-
-      // Check PayPal
-      const isPaypalAvailable = PayPalModule !== null;
-      setPaypalAvailable(isPaypalAvailable);
-
-      // Check PhonePe
-      const isPhonePeAvailable = PhonePeModule !== null;
-      setPhonePeAvailable(isPhonePeAvailable);
-
-      console.log("Payment gateways availability:", {
-        razorpay: isRazorpayAvailable,
-        stripe: isStripeAvailable,
-        paypal: isPaypalAvailable,
-        phonePe: isPhonePeAvailable,
-      });
-
-      // Set default payment gateway (prefer Razorpay if available)
-      if (isRazorpayAvailable) {
-        setSelectedGateway("razorpay");
-      } else if (isPhonePeAvailable) {
-        setSelectedGateway("phonepe");
-      } else if (isStripeAvailable) {
-        setSelectedGateway("stripe");
-      } else if (isPaypalAvailable) {
-        setSelectedGateway("paypal");
-      }
-
-      // Set payment mode based on any gateway availability
-      const anyGatewayAvailable =
-        isRazorpayAvailable ||
-        isStripeAvailable ||
-        isPaypalAvailable ||
-        isPhonePeAvailable;
-      setPaymentMode(anyGatewayAvailable ? "actual" : "simulation");
-    };
-
-    checkPaymentGateways();
-  }, []);
 
   // Calculate total amount and discount whenever items or payment method changes
   useEffect(() => {
@@ -188,197 +80,7 @@ const CartScreen = () => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  const handleGatewaySelection = (gateway) => {
-    setSelectedGateway(gateway);
-  };
-
-  const validatePaymentDetails = () => {
-    // if (!selectedSlot) {
-    //   Alert.alert("Error", "Please select a time slot");
-    //   return false;
-    // }
-
-    if (!selectedGateway) {
-      Alert.alert("Error", "Please select a payment method");
-      return false;
-    }
-
-    return true;
-  };
-
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleProceedToPay = async () => {
-    if (!validatePaymentDetails() || isProcessing) return;
-
-    const finalAmount = selectedPayment === "split" 
-      ? (totalAmount - discount) / 2 
-      : (totalAmount - discount);
-    
-    setIsProcessing(true);
-    
-    try {
-      let result;
-      switch (selectedGateway) {
-        case "razorpay":
-          result = await processRazorpayPayment(finalAmount);
-          break;
-        case "stripe":
-          result = await processStripePayment(finalAmount);
-          break;
-        case "paypal":
-          result = await processPayPalPayment(finalAmount);
-          break;
-        case "phonepe":
-          result = await processPhonePePayment(finalAmount);
-          break;
-        default:
-          throw new Error("Invalid payment method");
-      }
-      
-      handlePaymentSuccess(selectedGateway, result.paymentId);
-    } catch (error) {
-      console.error("Payment error:", error);
-      Alert.alert(
-        "Payment Failed",
-        error.message || "Something went wrong. Please try again."
-      );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const processRazorpayPayment = async (amount) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const success = Math.random() > 0.1; // 90% success rate
-        if (success) {
-          resolve({
-            paymentId: `rzp_test_${Date.now()}`,
-            amount: amount,
-          });
-        } else {
-          reject(new Error("Payment simulation failed"));
-        }
-      }, PAYMENT_CONFIG.SIMULATION_DELAY);
-    });
-  };
-
-  const processStripePayment = async (amount) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const success = Math.random() > 0.1;
-        if (success) {
-          resolve({
-            paymentId: `stripe_test_${Date.now()}`,
-            amount: amount,
-          });
-        } else {
-          reject(new Error("Payment simulation failed"));
-        }
-      }, PAYMENT_CONFIG.SIMULATION_DELAY);
-    });
-  };
-
-  const processPayPalPayment = async (amount) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const success = Math.random() > 0.1;
-        if (success) {
-          resolve({
-            paymentId: `pp_test_${Date.now()}`,
-            amount: amount,
-          });
-        } else {
-          reject(new Error("Payment simulation failed"));
-        }
-      }, PAYMENT_CONFIG.SIMULATION_DELAY);
-    });
-  };
-
-  const processPhonePePayment = async (amount) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const success = Math.random() > 0.1;
-        if (success) {
-          resolve({
-            paymentId: `phonepe_test_${Date.now()}`,
-            amount: amount,
-          });
-        } else {
-          reject(new Error("Payment simulation failed"));
-        }
-      }, PAYMENT_CONFIG.SIMULATION_DELAY);
-    });
-  };
-
-  // Fallback simulation for payment
-  const handleSimulatedPayment = (gateway = selectedGateway || "general") => {
-    setPaymentMode("simulation");
-
-    const gatewayName =
-      gateway === "razorpay"
-        ? "Razorpay"
-        : gateway === "stripe"
-        ? "Stripe"
-        : gateway === "paypal"
-        ? "PayPal"
-        : gateway === "phonepe"
-        ? "PhonePe"
-        : "Payment";
-
-    Alert.alert(
-      `SIMULATION MODE - ${gatewayName}`,
-      `⚠️ ${gatewayName} integration is not available. This is a payment simulation for development purposes only.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Simulate Payment",
-          onPress: () => {
-            Alert.alert(
-              "Simulated Payment Successful",
-              `⚠️ This was a SIMULATED ${gatewayName} payment. No actual transaction occurred.`,
-              [
-                {
-                  text: "OK",
-                  onPress: () =>
-                    router.push({
-                      pathname: "/cart/payment-success",
-                      params: {
-                        paymentMode: "simulation",
-                        paymentGateway: gateway,
-                        paymentId: `sim-${gateway}-${Date.now()}`,
-                      },
-                    }),
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
-  };
-
-  // Add a new function to handle successful payments
-  const handlePaymentSuccess = (gateway, paymentId) => {
-    Alert.alert(
-      "Payment Successful",
-      `Payment completed via ${gateway.toUpperCase()}.\nPayment ID: ${paymentId}`,
-      [
-        {
-          text: "OK",
-          onPress: () =>
-            router.push({
-              pathname: "/cart/payment-success",
-              params: {
-                paymentMode: gateway,
-                paymentId: paymentId,
-              },
-            }),
-        },
-      ]
-    );
-  };
 
   // Get button text based on selected gateway and payment option
   const getPayButtonText = () => {
@@ -387,38 +89,6 @@ const CartScreen = () => {
         ? (totalAmount - discount) / 2
         : totalAmount - discount
     )}`;
-
-    const prefixText = paymentMode === "simulation" ? "SIMULATE" : "Pay with";
-    const gatewayText =
-      selectedGateway === "razorpay"
-        ? "Razorpay"
-        : selectedGateway === "stripe"
-        ? "Stripe"
-        : selectedGateway === "paypal"
-        ? "PayPal"
-        : selectedGateway === "phonepe"
-        ? "PhonePe"
-        : "Selected Method";
-
-    return `${prefixText} ${gatewayText} (${amountText})`;
-  };
-
-  // Get button style based on selected gateway
-  const getPayButtonStyle = () => {
-    if (paymentMode === "simulation") return styles.simulateButton;
-
-    switch (selectedGateway) {
-      case "razorpay":
-        return styles.razorpayButton;
-      case "stripe":
-        return styles.stripeButton;
-      case "paypal":
-        return styles.paypalButton;
-      case "phonepe":
-        return styles.phonePeButton;
-      default:
-        return styles.defaultPayButton;
-    }
   };
 
   return (
@@ -431,15 +101,6 @@ const CartScreen = () => {
       <BackgroundShapes />
 
       <Header title="Confirm Order" onBack={handleBack} />
-
-      {/* Payment Mode Indicator */}
-      {paymentMode === "simulation" && (
-        <View style={styles.paymentModeIndicator}>
-          <Text style={styles.paymentModeText}>
-            ⚠️ SIMULATION MODE - Payment Gateways Not Available
-          </Text>
-        </View>
-      )}
 
       <ScrollView style={styles.content}>
         {/* Cart Items */}
@@ -515,7 +176,7 @@ const CartScreen = () => {
         </Section>
 
         {/* Payment Method Selection */}
-        <Section title="Select Payment Method">
+        {/* <Section title="Select Payment Method">
           <View style={styles.paymentMethodsContainer}>
             <TouchableOpacity
               style={[
@@ -603,15 +264,15 @@ const CartScreen = () => {
               Note: All payments will be simulated for development purposes
             </Text>
           )}
-        </Section>
+        </Section> */}
       </ScrollView>
 
-      <PrimaryButton 
-  title={isProcessing ? "Processing..." : getPayButtonText()} 
-  onPress={handleProceedToPay}
-  style={getPayButtonStyle()}
-  disabled={isProcessing}
-/>
+      <PrimaryButton
+        title={isProcessing ? "Processing..." : "Pay Now"}
+        // onPress={handleProceedToPay}
+        // style={getPayButtonStyle()}
+        disabled={isProcessing}
+      />
     </SafeAreaView>
   );
 };

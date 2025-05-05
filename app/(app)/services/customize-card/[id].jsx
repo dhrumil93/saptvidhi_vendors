@@ -78,7 +78,10 @@ const CustomizeCardPage = () => {
           <TouchableOpacity style={styles.nextButton}>
             <Text style={styles.nextButtonText}>Next</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.saveDraftButton}>
+          <TouchableOpacity
+            style={styles.saveDraftButton}
+            onPress={() => router.push(`/home/services/customize-card`)}
+          >
             <Text style={styles.saveDraftText}>Save Draft</Text>
           </TouchableOpacity>
         </View>

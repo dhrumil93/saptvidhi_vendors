@@ -322,6 +322,7 @@ const styles = StyleSheet.create({
   },
   horizontalList: {
     paddingLeft: 16,
+    // backgroundColor: "#666",
   },
   horizontalListContent: {
     paddingRight: 16,

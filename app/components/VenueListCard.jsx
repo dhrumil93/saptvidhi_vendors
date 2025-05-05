@@ -31,7 +31,10 @@ const VenueListCard = ({
 const styles = StyleSheet.create({
   container: {
     width: 260,
-    backgroundColor: '#FFFFFF',
+    // height: 260,
+    backgroundColor: '#FFF',
+    marginBottom: 4,
+    marginTop: 2,
     borderRadius: 12,
     marginRight: 16,
     shadowColor: '#000',

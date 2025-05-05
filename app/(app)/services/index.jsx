@@ -41,23 +41,23 @@ const ServicesPage = () => {
                 <InviteSection
                     title="Wedding Cards"
                     data={invitesData.weddingCards}
-                    onViewAll={() => router.push('/services/wedding-cards')}
-                    onItemPress={(item) => router.push(`/services/wedding-cards/${item.id}`)}
+                    onViewAll={() => router.push('/services/your-cards')}
+                    onItemPress={(item) => router.push(`/services/your-cards`)}
                 />
 
                 <InviteSection
                     title="Video Invites"
                     data={invitesData.videoInvites}
-                    onViewAll={() => router.push('/services/video-invites')}
-                    onItemPress={(item) => router.push(`/services/video-invites/${item.id}`)}
+                    // onViewAll={() => router.push('/services/video-invites')}
+                    // onItemPress={(item) => router.push(`/services/video-invites/${item.id}`)}
                     showDuration
                 />
 
                 <InviteSection
                     title="Save The Date Cards"
                     data={invitesData.saveTheDate}
-                    onViewAll={() => router.push('/services/save-the-date')}
-                    onItemPress={(item) => router.push(`/services/save-the-date/${item.id}`)}
+                    // onViewAll={() => router.push('/services/save-the-date')}
+                    // onItemPress={(item) => router.push(`/services/save-the-date/${item.id}`)}
                 />
             </ScrollView>
 

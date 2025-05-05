@@ -21,7 +21,11 @@ const BottomTabBar = () => {
   const tabs = [
     { label: "Home", icon: "home", path: "/home" },
     { label: "Ideas", icon: "bulb-outline", path: "/ideas" },
-    { label: "Vendors", icon: "accessibility-outline", path: "/vendor-categories" },
+    {
+      label: "Vendors",
+      icon: "accessibility-outline",
+      path: "/vendor-categories",
+    },
     { label: "services", icon: "medical-outline", path: "/services" },
     {
       label: "More",
